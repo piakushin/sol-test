@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use anyhow::Result;
 use anyhow::anyhow;
-use borsh::{BorshDeserialize, BorshSerialize};
 use clap::Parser;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
@@ -12,9 +11,12 @@ use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
+mod transfer;
+
 #[derive(Parser)]
 enum CliCommands {
     GetBalances { file: String },
+    Transfer { file: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,14 +25,7 @@ pub struct Balance {
     balance: u64,
 }
 
-#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize)]
-pub enum MTreeInstruction {
-    InsertLeaf { data: Vec<u8> },
-}
-
 async fn get_balances(file: String) -> Result<()> {
-    dotenv::dotenv()?;
-
     // Read config from YAML file
     let wallets: Vec<String> = serde_yaml::from_str(&fs::read_to_string(file)?)?;
 
@@ -63,10 +58,12 @@ async fn get_balances(file: String) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv::dotenv()?;
     let args = CliCommands::parse();
 
     match args {
         CliCommands::GetBalances { file } => get_balances(file).await?,
+        CliCommands::Transfer { file } => transfer::transfer(file).await?,
     }
 
     return Ok(());
