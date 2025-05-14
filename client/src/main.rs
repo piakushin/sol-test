@@ -11,12 +11,21 @@ use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
+mod geyser;
 mod transfer;
 
 #[derive(Parser)]
 enum CliCommands {
-    GetBalances { file: String },
-    Transfer { file: String },
+    GetBalances {
+        file: String,
+    },
+    Transfer {
+        file: String,
+    },
+    Geyser {
+        #[clap(short, long, default_value_t = String::from("geyser.yaml"))]
+        file: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -64,7 +73,7 @@ async fn main() -> Result<()> {
     match args {
         CliCommands::GetBalances { file } => get_balances(file).await?,
         CliCommands::Transfer { file } => transfer::transfer(file).await?,
+        CliCommands::Geyser { file } => geyser::geyser(file).await?,
     }
-
-    return Ok(());
+    Ok(())
 }
